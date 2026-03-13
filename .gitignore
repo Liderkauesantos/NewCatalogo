@@ -12,6 +12,14 @@ dist
 dist-ssr
 *.local
 
+# Docker env (contém senhas)
+.env.docker
+!.env.docker.example
+
+# Volume data
+pgdata/
+frontend/dist/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
