@@ -10,7 +10,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
+import { uploadFile } from "@/lib/upload";
 import { cn } from "@/lib/utils";
 
 const GRADIENTS = [
@@ -47,12 +47,8 @@ function SlideForm({
     if (!file) return;
     setUploading(true);
     try {
-      const ext = file.name.split(".").pop();
-      const path = `banners/${Date.now()}.${ext}`;
-      const { error } = await supabase.storage.from("product-images").upload(path, file, { upsert: true });
-      if (error) throw error;
-      const { data } = supabase.storage.from("product-images").getPublicUrl(path);
-      setImageUrl(data.publicUrl);
+      const url = await uploadFile(file, 'banners');
+      setImageUrl(url);
     } catch (err: any) {
       toast({ variant: "destructive", title: "Erro no upload", description: err.message });
     } finally {
@@ -103,7 +99,7 @@ function SlideForm({
 
       <div className="space-y-1.5">
         <Label>Título *</Label>
-        <Input value={title} onChange={(e) => setTitle(e.target.value)} className="rounded-xl" placeholder="Ex: Novidades Zanardi" />
+        <Input value={title} onChange={(e) => setTitle(e.target.value)} className="rounded-xl" placeholder="Ex: Novidades da semana" />
       </div>
 
       <div className="space-y-1.5">

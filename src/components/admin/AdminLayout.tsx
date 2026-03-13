@@ -36,7 +36,7 @@ export function AdminLayout() {
             >
               <Menu className="h-5 w-5" />
             </button>
-            <span className="font-bold text-foreground">Zanardi Admin</span>
+            <span className="font-bold text-foreground">Admin do Catálogo</span>
           </div>
 
           <main className="flex-1 p-6 overflow-auto">

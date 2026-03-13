@@ -2,7 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Design system — Zanardi Moderno inspirado em Bitrix24
+/* Design system — Catálogo Moderno inspirado em Bitrix24
    Tipografia forte, espaços generosos, cards limpos
    Todos os valores de cor DEVEM ser HSL.
 */
@@ -18,7 +18,7 @@
     --popover: 0 0% 100%;
     --popover-foreground: 220 25% 10%;
 
-    /* Laranja vibrante Zanardi */
+    /* Laranja vibrante do catálogo */
     --primary: 25 95% 53%;
     --primary-foreground: 0 0% 100%;
 

@@ -11,6 +11,13 @@ export default defineConfig(({ mode }) => ({
     hmr: {
       overlay: false,
     },
+    proxy: {
+      '/api': {
+        target: 'http://localhost:3000',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api/, ''),
+      },
+    },
   },
   plugins: [
     react(),
@@ -24,9 +31,9 @@ export default defineConfig(({ mode }) => ({
         navigateFallbackDenylist: [/^\/~oauth/],
       },
       manifest: {
-        name: "Catálogo Zanardi",
-        short_name: "Zanardi",
-        description: "Catálogo digital de produtos Zanardi",
+        name: "Catálogo",
+        short_name: "Catálogo",
+        description: "Catálogo digital de produtos",
         theme_color: "#1a1a2e",
         background_color: "#ffffff",
         display: "standalone",

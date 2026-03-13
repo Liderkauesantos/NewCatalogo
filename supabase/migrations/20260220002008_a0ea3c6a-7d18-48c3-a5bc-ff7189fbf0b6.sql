@@ -58,5 +58,5 @@ create trigger update_carousel_slides_updated_at
 -- Slides padrão para começar
 insert into public.carousel_slides (title, subtitle, cta_text, bg_gradient, display_order) values
   ('Produtos de Qualidade IPI', 'As melhores soluções para o seu negócio com entrega rápida e garantida.', 'Ver Catálogo', 'from-orange-500 via-orange-400 to-amber-300', 0),
-  ('Novidades na Linha Zanardi', 'Confira os produtos mais recentes com preços especiais para revendedores.', 'Ver Novidades', 'from-blue-600 via-blue-500 to-cyan-400', 1),
+  ('Novidades da Linha', 'Confira os produtos mais recentes com preços especiais para revendedores.', 'Ver Novidades', 'from-blue-600 via-blue-500 to-cyan-400', 1),
   ('Faça Seu Pedido pelo WhatsApp', 'Monte seu carrinho e envie o pedido diretamente pelo WhatsApp. Rápido e fácil.', 'Montar Pedido', 'from-emerald-600 via-emerald-500 to-teal-400', 2);

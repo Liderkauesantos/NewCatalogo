@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Palette, Upload, Loader2, Save } from "lucide-react";
 import { useBrandSettings, useUpdateBrand } from "@/hooks/useBrandSettings";
-import { supabase } from "@/integrations/supabase/client";
+import { uploadFile } from "@/lib/upload";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -28,17 +28,14 @@ export default function AdminMarca() {
     const file = e.target.files?.[0];
     if (!file) return;
     setUploading(true);
-    const ext = file.name.split(".").pop();
-    const path = `logo-${Date.now()}.${ext}`;
-    const { error } = await supabase.storage.from("brand-assets").upload(path, file, { upsert: true });
-    if (error) {
-      toast({ title: "Erro ao enviar logo", description: error.message, variant: "destructive" });
+    try {
+      const url = await uploadFile(file, 'brand-assets');
+      setLogoUrl(url);
+    } catch (err: any) {
+      toast({ title: "Erro ao enviar logo", description: err.message, variant: "destructive" });
+    } finally {
       setUploading(false);
-      return;
     }
-    const { data: pub } = supabase.storage.from("brand-assets").getPublicUrl(path);
-    setLogoUrl(pub.publicUrl);
-    setUploading(false);
   };
 
   const handleSave = async () => {

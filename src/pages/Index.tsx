@@ -8,7 +8,7 @@ import { CartSheet } from "@/components/cart/CartSheet";
 import { useProducts } from "@/hooks/useProducts";
 import { useCategories } from "@/hooks/useCategories";
 import { useBrandSettings } from "@/hooks/useBrandSettings";
-import logo from "@/assets/logo.png";
+import logo from "@/assets/logo.ico";
 
 const Index = () => {
   const [cartOpen, setCartOpen] = useState(false);

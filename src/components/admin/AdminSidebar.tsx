@@ -1,23 +1,30 @@
-import { NavLink, useLocation, Link } from "react-router-dom";
+import { NavLink, useLocation, Link, useParams } from "react-router-dom";
 import { LayoutDashboard, Package, Images, ShoppingBag, CreditCard, MessageCircle, Palette, LogOut, ArrowLeft } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useBrandSettings } from "@/hooks/useBrandSettings";
 import { cn } from "@/lib/utils";
 
-const navItems = [
-  { title: "Dashboard", url: "/admin", icon: LayoutDashboard, exact: true },
-  { title: "Produtos", url: "/admin/produtos", icon: Package, exact: false },
-  { title: "Carrossel", url: "/admin/carrossel", icon: Images, exact: false },
-  { title: "Pedidos", url: "/admin/pedidos", icon: ShoppingBag, exact: false },
-  { title: "Pagamentos", url: "/admin/pagamentos", icon: CreditCard, exact: false },
-  { title: "WhatsApp", url: "/admin/whatsapp", icon: MessageCircle, exact: false },
-  { title: "Marca", url: "/admin/marca", icon: Palette, exact: false },
+const navItemsDef = [
+  { title: "Dashboard", path: "admin", icon: LayoutDashboard, exact: true },
+  { title: "Produtos", path: "admin/produtos", icon: Package, exact: false },
+  { title: "Carrossel", path: "admin/carrossel", icon: Images, exact: false },
+  { title: "Pedidos", path: "admin/pedidos", icon: ShoppingBag, exact: false },
+  { title: "Pagamentos", path: "admin/pagamentos", icon: CreditCard, exact: false },
+  { title: "WhatsApp", path: "admin/whatsapp", icon: MessageCircle, exact: false },
+  { title: "Marca", path: "admin/marca", icon: Palette, exact: false },
 ];
 
 export function AdminSidebar() {
   const { signOut, user } = useAuth();
   const { data: brand } = useBrandSettings();
   const location = useLocation();
+  const { slug } = useParams();
+  const base = `/${slug ?? ''}`;
+
+  const navItems = navItemsDef.map((item) => ({
+    ...item,
+    url: `${base}/${item.path}`,
+  }));
 
   const isActive = (url: string, exact: boolean) =>
     exact ? location.pathname === url : location.pathname.startsWith(url);
@@ -68,16 +75,16 @@ export function AdminSidebar() {
         <div className="flex items-center gap-3 px-3 py-2 rounded-xl bg-muted mb-2">
           <div className="h-8 w-8 rounded-full bg-primary/20 flex items-center justify-center">
             <span className="text-xs font-bold text-primary uppercase">
-              {user?.email?.[0] ?? "A"}
+              {user?.display_name?.[0] ?? "A"}
             </span>
           </div>
           <div className="min-w-0">
-            <p className="text-xs font-semibold text-foreground truncate">{user?.email}</p>
+            <p className="text-xs font-semibold text-foreground truncate">{user?.display_name}</p>
             <p className="text-[10px] text-muted-foreground">Administrador</p>
           </div>
         </div>
         <Link
-          to="/"
+          to={base}
           className="flex items-center gap-2 w-full px-3 py-2 rounded-xl text-sm text-muted-foreground hover:bg-muted hover:text-foreground transition-all mb-1"
         >
           <ArrowLeft className="h-4 w-4" />

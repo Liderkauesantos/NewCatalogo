@@ -1,81 +1,111 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
-import { Session, User } from "@supabase/supabase-js";
-import { supabase } from "@/integrations/supabase/client";
+import api from "@/lib/api";
+
+interface AuthUser {
+  user_id: string;
+  tenant_id: string;
+  tenant_slug: string;
+  display_name: string;
+  logo_url: string | null;
+  primary_color: string;
+  role: string;
+}
 
 interface AuthContextType {
-  session: Session | null;
-  user: User | null;
+  user: AuthUser | null;
   isAdmin: boolean;
   isLoading: boolean;
-  signOut: () => Promise<void>;
+  login: (email: string, password: string) => Promise<AuthUser>;
+  signOut: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
+function parseJwtPayload(token: string): Record<string, any> | null {
+  try {
+    const base64 = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
+    return JSON.parse(atob(base64));
+  } catch {
+    return null;
+  }
+}
+
+function loadUserFromStorage(): AuthUser | null {
+  const token = localStorage.getItem('nc_token');
+  if (!token) return null;
+
+  const payload = parseJwtPayload(token);
+  if (!payload) return null;
+
+  // Check expiry
+  if (payload.exp && payload.exp * 1000 < Date.now()) {
+    localStorage.removeItem('nc_token');
+    return null;
+  }
+
+  return {
+    user_id: payload.user_id,
+    tenant_id: payload.tenant_id,
+    tenant_slug: payload.tenant_slug ?? localStorage.getItem('nc_tenant_slug') ?? '',
+    display_name: localStorage.getItem('nc_display_name') ?? '',
+    logo_url: localStorage.getItem('nc_logo_url') ?? null,
+    primary_color: localStorage.getItem('nc_primary_color') ?? '#000000',
+    role: payload.role ?? 'admin',
+  };
+}
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [session, setSession] = useState<Session | null>(null);
-  const [isAdmin, setIsAdmin] = useState(false);
+  const [user, setUser] = useState<AuthUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    let isMounted = true;
-
-    const checkAdminRole = async (userId: string) => {
-      try {
-        const { data } = await supabase.rpc("has_role", {
-          _user_id: userId,
-          _role: "admin",
-        });
-        if (isMounted) setIsAdmin(!!data);
-      } catch {
-        if (isMounted) setIsAdmin(false);
-      }
-    };
-
-    // Listener for ONGOING auth changes — uses setTimeout to avoid deadlock
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
-        if (!isMounted) return;
-        setSession(session);
-        if (session?.user) {
-          // Dispatch after callback to avoid Supabase client deadlock
-          setTimeout(() => checkAdminRole(session.user.id), 0);
-        } else {
-          setIsAdmin(false);
-        }
-      }
-    );
-
-    // INITIAL load — controls isLoading, awaits role before setting false
-    const initializeAuth = async () => {
-      try {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (!isMounted) return;
-        setSession(session);
-        if (session?.user) {
-          await checkAdminRole(session.user.id);
-        }
-      } finally {
-        if (isMounted) setIsLoading(false);
-      }
-    };
-
-    initializeAuth();
-
-    return () => {
-      isMounted = false;
-      subscription.unsubscribe();
-    };
+    setUser(loadUserFromStorage());
+    setIsLoading(false);
   }, []);
 
-  const signOut = async () => {
-    await supabase.auth.signOut();
+  const login = async (email: string, password: string): Promise<AuthUser> => {
+    const { data } = await api.post('/rpc/login', {
+      p_email: email,
+      p_password: password,
+    });
+
+    const result = data;
+
+    localStorage.setItem('nc_token', result.token);
+    localStorage.setItem('nc_tenant_slug', result.tenant_slug);
+    localStorage.setItem('nc_display_name', result.display_name);
+    localStorage.setItem('nc_logo_url', result.logo_url ?? '');
+    localStorage.setItem('nc_primary_color', result.primary_color ?? '#000000');
+
+    const payload = parseJwtPayload(result.token);
+
+    const authUser: AuthUser = {
+      user_id: payload?.user_id ?? '',
+      tenant_id: payload?.tenant_id ?? '',
+      tenant_slug: result.tenant_slug,
+      display_name: result.display_name,
+      logo_url: result.logo_url,
+      primary_color: result.primary_color,
+      role: result.role ?? 'admin',
+    };
+
+    setUser(authUser);
+    return authUser;
   };
 
+  const signOut = () => {
+    localStorage.removeItem('nc_token');
+    localStorage.removeItem('nc_tenant_slug');
+    localStorage.removeItem('nc_display_name');
+    localStorage.removeItem('nc_logo_url');
+    localStorage.removeItem('nc_primary_color');
+    setUser(null);
+  };
+
+  const isAdmin = user?.role === 'admin';
+
   return (
-    <AuthContext.Provider
-      value={{ session, user: session?.user ?? null, isAdmin, isLoading, signOut }}
-    >
+    <AuthContext.Provider value={{ user, isAdmin, isLoading, login, signOut }}>
       {children}
     </AuthContext.Provider>
   );

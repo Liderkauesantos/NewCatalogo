@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import api from "@/lib/api";
 
 export interface Category {
   id: string;
@@ -11,12 +11,8 @@ export function useCategories() {
   return useQuery({
     queryKey: ["categories"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("categories")
-        .select("*")
-        .order("name");
-      if (error) throw error;
-      return data as Category[];
+      const { data } = await api.get('/categories', { params: { order: 'name' } });
+      return (data ?? []) as Category[];
     },
   });
 }
@@ -25,13 +21,10 @@ export function useCreateCategory() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (name: string) => {
-      const { data, error } = await supabase
-        .from("categories")
-        .insert({ name })
-        .select()
-        .single();
-      if (error) throw error;
-      return data;
+      const { data } = await api.post('/categories', { name }, {
+        headers: { Prefer: 'return=representation' },
+      });
+      return Array.isArray(data) ? data[0] : data;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["categories"] }),
   });

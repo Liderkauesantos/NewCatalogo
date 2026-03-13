@@ -33,23 +33,29 @@ const App = () => (
           <BrowserRouter>
             <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><div className="h-8 w-8 border-4 border-primary border-t-transparent rounded-full animate-spin" /></div>}>
               <Routes>
-                {/* Catálogo público */}
-                <Route path="/" element={<Index />} />
+                {/* Rota raiz — redireciona ou mostra landing */}
+                <Route path="/" element={<NotFound />} />
                 <Route path="/install" element={<Install />} />
 
-                {/* Login e setup admin */}
-                <Route path="/admin/login" element={<Login />} />
-                <Route path="/admin/setup" element={<AdminSetup />} />
+                {/* Rotas com slug do tenant: /:slug/... */}
+                <Route path="/:slug">
+                  {/* Catálogo público */}
+                  <Route index element={<Index />} />
 
-                {/* Painel admin com layout e sidebar */}
-                <Route path="/admin" element={<AdminLayout />}>
-                  <Route index element={<AdminDashboard />} />
-                  <Route path="produtos" element={<AdminProdutos />} />
-                  <Route path="carrossel" element={<AdminCarrossel />} />
-                  <Route path="pedidos" element={<AdminPedidos />} />
-                  <Route path="pagamentos" element={<AdminPagamentos />} />
-                  <Route path="whatsapp" element={<AdminWhatsapp />} />
-                  <Route path="marca" element={<AdminMarca />} />
+                  {/* Login e setup admin */}
+                  <Route path="admin/login" element={<Login />} />
+                  <Route path="admin/setup" element={<AdminSetup />} />
+
+                  {/* Painel admin com layout e sidebar */}
+                  <Route path="admin" element={<AdminLayout />}>
+                    <Route index element={<AdminDashboard />} />
+                    <Route path="produtos" element={<AdminProdutos />} />
+                    <Route path="carrossel" element={<AdminCarrossel />} />
+                    <Route path="pedidos" element={<AdminPedidos />} />
+                    <Route path="pagamentos" element={<AdminPagamentos />} />
+                    <Route path="whatsapp" element={<AdminWhatsapp />} />
+                    <Route path="marca" element={<AdminMarca />} />
+                  </Route>
                 </Route>
 
                 <Route path="*" element={<NotFound />} />

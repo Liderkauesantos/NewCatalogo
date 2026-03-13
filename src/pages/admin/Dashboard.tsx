@@ -24,7 +24,7 @@ export default function Dashboard() {
           <div className="container mx-auto flex items-center justify-between px-4 py-3">
             <div className="flex items-center gap-2">
               <Package className="h-6 w-6 text-primary-foreground" />
-              <span className="font-extrabold text-primary-foreground text-lg">Zanardi Admin</span>
+              <span className="font-extrabold text-primary-foreground text-lg">Admin do Catálogo</span>
             </div>
             <div className="flex items-center gap-3">
               <span className="text-sm text-primary-foreground/70 hidden sm:block">{user?.email}</span>

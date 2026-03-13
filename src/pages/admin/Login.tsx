@@ -1,7 +1,7 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { Package, LogIn } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -13,29 +13,18 @@ export default function Login() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const { slug } = useParams();
   const { toast } = useToast();
+  const { login } = useAuth();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-      if (error) throw error;
+      const authUser = await login(email, password);
 
-      // Verify admin role server-side
-      const { data: isAdmin, error: roleError } = await supabase.rpc("has_role", {
-        _user_id: data.user.id,
-        _role: "admin",
-      });
-
-      if (roleError) {
-        console.error("Erro ao verificar role:", roleError);
-        throw new Error("Erro ao verificar permissões. Tente novamente.");
-      }
-
-      if (!isAdmin) {
-        await supabase.auth.signOut();
+      if (authUser.role !== 'admin') {
         toast({
           variant: "destructive",
           title: "Acesso não autorizado",
@@ -44,12 +33,13 @@ export default function Login() {
         return;
       }
 
-      navigate("/admin", { replace: true });
+      navigate(`/${slug ?? ''}/admin`, { replace: true });
     } catch (error: any) {
+      const msg = error?.response?.data?.message || error.message || "Verifique suas credenciais.";
       toast({
         variant: "destructive",
         title: "Erro ao entrar",
-        description: error.message || "Verifique suas credenciais.",
+        description: msg,
       });
     } finally {
       setLoading(false);
@@ -65,7 +55,7 @@ export default function Login() {
               <Package className="h-8 w-8 text-primary-foreground" />
             </div>
           </div>
-          <CardTitle className="text-2xl font-extrabold">Zanardi Admin</CardTitle>
+          <CardTitle className="text-2xl font-extrabold">Admin do Catálogo</CardTitle>
           <CardDescription>Entre com suas credenciais de administrador</CardDescription>
         </CardHeader>
         <CardContent>
@@ -75,7 +65,7 @@ export default function Login() {
               <Input
                 id="email"
                 type="email"
-                placeholder="admin@zanardi.com"
+                placeholder="admin@catalogo.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required

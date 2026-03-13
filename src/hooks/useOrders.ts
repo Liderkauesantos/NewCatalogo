@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import api from "@/lib/api";
 
 export interface OrderItem {
   product_id: string;
@@ -27,12 +27,13 @@ export function useOrders() {
   return useQuery({
     queryKey: ["orders"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("orders")
-        .select("*")
-        .order("created_at", { ascending: false });
-      if (error) throw error;
-      return (data ?? []).map((o) => ({ ...o, items: o.items as unknown as OrderItem[] })) as Order[];
+      const { data } = await api.get('/orders', {
+        params: { order: 'created_at.desc' },
+      });
+      return ((data ?? []) as any[]).map((o) => ({
+        ...o,
+        items: typeof o.items === 'string' ? JSON.parse(o.items) : o.items,
+      })) as Order[];
     },
   });
 }
@@ -41,13 +42,10 @@ export function useCreateOrder() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (order: Omit<Order, "id" | "created_at" | "order_number">) => {
-      const { data, error } = await supabase
-        .from("orders")
-        .insert({ ...order, items: order.items as unknown as any })
-        .select()
-        .single();
-      if (error) throw error;
-      return data;
+      const { data } = await api.post('/orders', order, {
+        headers: { Prefer: 'return=representation' },
+      });
+      return Array.isArray(data) ? data[0] : data;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["orders"] }),
   });
@@ -57,14 +55,10 @@ export function useUpdateOrderStatus() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, status }: { id: string; status: string }) => {
-      const { data, error } = await supabase
-        .from("orders")
-        .update({ status })
-        .eq("id", id)
-        .select()
-        .single();
-      if (error) throw error;
-      return data;
+      const { data } = await api.patch(`/orders?id=eq.${id}`, { status }, {
+        headers: { Prefer: 'return=representation' },
+      });
+      return Array.isArray(data) ? data[0] : data;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["orders"] }),
   });
@@ -74,8 +68,7 @@ export function useDeleteOrder() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("orders").delete().eq("id", id);
-      if (error) throw error;
+      await api.delete(`/orders?id=eq.${id}`);
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["orders"] }),
   });

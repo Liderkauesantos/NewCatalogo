@@ -52,7 +52,7 @@ const Install = () => {
           </CardHeader>
           <CardContent className="space-y-4">
             <p className="text-muted-foreground">
-              O Catálogo Zanardi já está instalado no seu dispositivo.
+              O Catálogo já está instalado no seu dispositivo.
             </p>
             <Button onClick={() => navigate("/")} className="w-full">
               Ir para o Catálogo
@@ -68,7 +68,7 @@ const Install = () => {
       <Card className="max-w-md w-full">
         <CardHeader className="text-center">
           <Smartphone className="mx-auto h-16 w-16 text-primary mb-4" />
-          <CardTitle className="text-2xl">Instalar Catálogo Zanardi</CardTitle>
+          <CardTitle className="text-2xl">Instalar Catálogo</CardTitle>
           <p className="text-muted-foreground mt-2">
             Adicione o catálogo à tela inicial do seu celular para acesso rápido!
           </p>

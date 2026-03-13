@@ -1,16 +1,17 @@
 import { useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 
 export function AdminGuard({ children }: { children: React.ReactNode }) {
-  const { session, isAdmin, isLoading } = useAuth();
+  const { user, isAdmin, isLoading } = useAuth();
   const navigate = useNavigate();
+  const { slug } = useParams();
 
   useEffect(() => {
-    if (!isLoading && (!session || !isAdmin)) {
-      navigate("/admin/login", { replace: true });
+    if (!isLoading && (!user || !isAdmin)) {
+      navigate(`/${slug ?? ''}/admin/login`, { replace: true });
     }
-  }, [session, isAdmin, isLoading, navigate]);
+  }, [user, isAdmin, isLoading, navigate, slug]);
 
   if (isLoading) {
     return (
@@ -23,7 +24,7 @@ export function AdminGuard({ children }: { children: React.ReactNode }) {
     );
   }
 
-  if (!session || !isAdmin) return null;
+  if (!user || !isAdmin) return null;
 
   return <>{children}</>;
 }

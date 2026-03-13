@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import api from "@/lib/api";
 
 export interface ProductImage {
   id: string;
@@ -23,32 +23,42 @@ export interface Product {
   product_images?: ProductImage[];
 }
 
+async function fetchProductsWithRelations(params: Record<string, string> = {}): Promise<Product[]> {
+  const { data: products } = await api.get('/products', {
+    params: { order: 'name', ...params },
+  });
+  if (!Array.isArray(products)) return [];
+
+  const ids = products.map((p: any) => p.id);
+  if (ids.length === 0) return [];
+
+  const [catRes, imgRes] = await Promise.all([
+    api.get('/categories'),
+    api.get('/product_images', {
+      params: { product_id: `in.(${ids.join(',')})`, order: 'display_order' },
+    }),
+  ]);
+
+  const catMap = new Map((catRes.data ?? []).map((c: any) => [c.id, c]));
+
+  return products.map((p: any) => ({
+    ...p,
+    categories: catMap.get(p.category_id) ? { name: (catMap.get(p.category_id) as any).name } : null,
+    product_images: (imgRes.data ?? []).filter((img: any) => img.product_id === p.id),
+  }));
+}
+
 export function useProducts() {
   return useQuery({
     queryKey: ["products"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("products")
-        .select("*, categories(name), product_images(id, image_url, display_order)")
-        .eq("is_active", true)
-        .order("name");
-      if (error) throw error;
-      return data as Product[];
-    },
+    queryFn: () => fetchProductsWithRelations({ is_active: 'eq.true' }),
   });
 }
 
 export function useAllProducts() {
   return useQuery({
     queryKey: ["all-products"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("products")
-        .select("*, categories(name), product_images(id, image_url, display_order)")
-        .order("name");
-      if (error) throw error;
-      return data as Product[];
-    },
+    queryFn: () => fetchProductsWithRelations(),
   });
 }
 
@@ -56,9 +66,10 @@ export function useCreateProduct() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (product: Omit<Product, "id" | "created_at" | "updated_at" | "categories" | "product_images">) => {
-      const { data, error } = await supabase.from("products").insert(product).select().single();
-      if (error) throw error;
-      return data;
+      const { data } = await api.post('/products', product, {
+        headers: { Prefer: 'return=representation' },
+      });
+      return Array.isArray(data) ? data[0] : data;
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["products"] });
@@ -72,14 +83,10 @@ export function useUpdateProduct() {
   return useMutation({
     mutationFn: async ({ id, ...updates }: Partial<Product> & { id: string }) => {
       const { categories, product_images, ...cleanUpdates } = updates as any;
-      const { data, error } = await supabase
-        .from("products")
-        .update(cleanUpdates)
-        .eq("id", id)
-        .select()
-        .single();
-      if (error) throw error;
-      return data;
+      const { data } = await api.patch(`/products?id=eq.${id}`, cleanUpdates, {
+        headers: { Prefer: 'return=representation' },
+      });
+      return Array.isArray(data) ? data[0] : data;
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["products"] });
@@ -92,8 +99,7 @@ export function useDeleteProduct() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("products").delete().eq("id", id);
-      if (error) throw error;
+      await api.delete(`/products?id=eq.${id}`);
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["products"] });

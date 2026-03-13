@@ -1,7 +1,7 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { Package, UserPlus } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import api from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -15,6 +15,7 @@ export default function AdminSetup() {
   const [loading, setLoading] = useState(false);
   const [done, setDone] = useState(false);
   const navigate = useNavigate();
+  const { slug } = useParams();
   const { toast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -31,12 +32,13 @@ export default function AdminSetup() {
 
     setLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke("create-admin", {
-        body: { email, password },
+      const { data } = await api.post('/rpc/create_admin', {
+        p_email: email,
+        p_password: password,
       });
 
-      if (error || !data?.success) {
-        throw new Error(data?.error || error?.message || "Erro ao criar usuário");
+      if (!data?.success) {
+        throw new Error(data?.error || "Erro ao criar usuário");
       }
 
       setDone(true);
@@ -65,7 +67,7 @@ export default function AdminSetup() {
             <div className="text-center space-y-4">
               <div className="text-primary font-semibold text-lg">✅ Admin criado com sucesso!</div>
               <p className="text-sm text-muted-foreground">Agora faça login com as credenciais cadastradas.</p>
-              <Button className="w-full rounded-xl" onClick={() => navigate("/admin/login")}>
+              <Button className="w-full rounded-xl" onClick={() => navigate(`/${slug ?? ''}/admin/login`)}>
                 Ir para o Login
               </Button>
             </div>
@@ -117,7 +119,7 @@ export default function AdminSetup() {
               </Button>
               <p className="text-xs text-center text-muted-foreground">
                 Já tem uma conta?{" "}
-                <button type="button" onClick={() => navigate("/admin/login")} className="text-primary underline">
+                <button type="button" onClick={() => navigate(`/${slug ?? ''}/admin/login`)} className="text-primary underline">
                   Fazer login
                 </button>
               </p>

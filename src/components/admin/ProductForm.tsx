@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { supabase } from "@/integrations/supabase/client";
+import { uploadFile } from "@/lib/upload";
 import { Product, useCreateProduct, useUpdateProduct } from "@/hooks/useProducts";
 import { useProductImages, useCreateProductImage, useDeleteProductImage } from "@/hooks/useProductImages";
 import { useCategories, useCreateCategory } from "@/hooks/useCategories";
@@ -90,12 +90,8 @@ export function ProductForm({ product, onSuccess, onCancel }: ProductFormProps) 
     try {
       const newImages: ImageItem[] = [];
       for (const file of Array.from(files)) {
-        const ext = file.name.split(".").pop();
-        const path = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
-        const { error } = await supabase.storage.from("product-images").upload(path, file, { upsert: true });
-        if (error) throw error;
-        const { data } = supabase.storage.from("product-images").getPublicUrl(path);
-        newImages.push({ url: data.publicUrl, isNew: true });
+        const url = await uploadFile(file, 'product-images');
+        newImages.push({ url, isNew: true });
       }
       setImages((prev) => [...prev, ...newImages]);
     } catch (err: any) {
@@ -227,7 +223,7 @@ export function ProductForm({ product, onSuccess, onCancel }: ProductFormProps) 
       {/* Upload de imagens */}
       <div className="space-y-1.5">
         <Label>Fotos do produto</Label>
-        
+
         {/* Grid de previews */}
         {images.length > 0 && (
           <div className="grid grid-cols-4 gap-2">
