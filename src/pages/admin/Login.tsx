@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Package, LogIn } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
@@ -15,7 +15,14 @@ export default function Login() {
   const navigate = useNavigate();
   const { slug } = useParams();
   const { toast } = useToast();
-  const { login } = useAuth();
+  const { login, user, isAdmin, isLoading } = useAuth();
+
+  // Se já está autenticado como admin, redireciona para o dashboard
+  useEffect(() => {
+    if (!isLoading && user && isAdmin) {
+      navigate(`/${slug ?? ''}/admin`, { replace: true });
+    }
+  }, [user, isAdmin, isLoading, navigate, slug]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -81,6 +88,7 @@ export default function Login() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
+                autoComplete="current-password"
                 className="rounded-xl"
               />
             </div>

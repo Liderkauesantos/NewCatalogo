@@ -33,24 +33,19 @@ function parseJwtPayload(token: string): Record<string, any> | null {
 function loadUserFromStorage(): AuthUser | null {
   const token = localStorage.getItem('nc_token');
   if (!token) {
-    console.log('[AuthContext] No token found in localStorage');
     return null;
   }
 
   const payload = parseJwtPayload(token);
   if (!payload) {
-    console.log('[AuthContext] Failed to parse JWT payload');
     return null;
   }
 
   // Check expiry
   if (payload.exp && payload.exp * 1000 < Date.now()) {
-    console.log('[AuthContext] Token expired');
     localStorage.removeItem('nc_token');
     return null;
   }
-
-  console.log('[AuthContext] Token valid, loading user:', payload.role);
 
   return {
     user_id: payload.user_id,
@@ -68,7 +63,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    setUser(loadUserFromStorage());
+    const loadedUser = loadUserFromStorage();
+    setUser(loadedUser);
     setIsLoading(false);
   }, []);
 

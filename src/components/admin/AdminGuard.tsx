@@ -8,8 +8,12 @@ export function AdminGuard({ children }: { children: React.ReactNode }) {
   const { slug } = useParams();
 
   useEffect(() => {
-    if (!isLoading && (!user || !isAdmin)) {
-      navigate(`/${slug ?? ''}/admin/login`, { replace: true });
+    if (!isLoading) {
+      if (!user) {
+        navigate(`/${slug ?? ''}/admin/login`, { replace: true });
+      } else if (!isAdmin) {
+        navigate(`/${slug ?? ''}/admin/login`, { replace: true });
+      }
     }
   }, [user, isAdmin, isLoading, navigate, slug]);
 
@@ -24,7 +28,9 @@ export function AdminGuard({ children }: { children: React.ReactNode }) {
     );
   }
 
-  if (!user || !isAdmin) return null;
+  if (!user || !isAdmin) {
+    return null;
+  }
 
   return <>{children}</>;
 }
