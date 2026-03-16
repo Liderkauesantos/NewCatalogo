@@ -3,8 +3,10 @@ import axios from 'axios';
 const api = axios.create({ baseURL: '/api' });
 
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('nc_token');
   const slug = window.location.pathname.split('/')[1];
+
+  // Buscar token específico do tenant
+  const token = slug ? localStorage.getItem(`nc_token_${slug}`) : null;
 
   if (token) {
     config.headers['Authorization'] = `Bearer ${token}`;

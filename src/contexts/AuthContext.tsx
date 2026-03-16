@@ -30,8 +30,20 @@ function parseJwtPayload(token: string): Record<string, any> | null {
   }
 }
 
+function getCurrentTenantSlug(): string {
+  // Pegar slug da URL atual
+  const pathParts = window.location.pathname.split('/').filter(p => p);
+  return pathParts[0] || '';
+}
+
 function loadUserFromStorage(): AuthUser | null {
-  const token = localStorage.getItem('nc_token');
+  const currentSlug = getCurrentTenantSlug();
+  if (!currentSlug) {
+    return null;
+  }
+
+  // Token específico do tenant
+  const token = localStorage.getItem(`nc_token_${currentSlug}`);
   if (!token) {
     return null;
   }
@@ -43,17 +55,23 @@ function loadUserFromStorage(): AuthUser | null {
 
   // Check expiry
   if (payload.exp && payload.exp * 1000 < Date.now()) {
-    localStorage.removeItem('nc_token');
+    localStorage.removeItem(`nc_token_${currentSlug}`);
+    return null;
+  }
+
+  // Verificar se o token é do tenant correto
+  if (payload.tenant_slug !== currentSlug) {
+    localStorage.removeItem(`nc_token_${currentSlug}`);
     return null;
   }
 
   return {
     user_id: payload.user_id,
     tenant_id: payload.tenant_id,
-    tenant_slug: payload.tenant_slug ?? localStorage.getItem('nc_tenant_slug') ?? '',
-    display_name: localStorage.getItem('nc_display_name') ?? '',
-    logo_url: localStorage.getItem('nc_logo_url') ?? null,
-    primary_color: localStorage.getItem('nc_primary_color') ?? '#000000',
+    tenant_slug: payload.tenant_slug,
+    display_name: localStorage.getItem(`nc_display_name_${currentSlug}`) ?? '',
+    logo_url: localStorage.getItem(`nc_logo_url_${currentSlug}`) ?? null,
+    primary_color: localStorage.getItem(`nc_primary_color_${currentSlug}`) ?? '#000000',
     role: payload.role ?? 'admin',
   };
 }
@@ -75,12 +93,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
 
     const result = data;
+    const tenantSlug = result.tenant_slug;
 
-    localStorage.setItem('nc_token', result.token);
-    localStorage.setItem('nc_tenant_slug', result.tenant_slug);
-    localStorage.setItem('nc_display_name', result.display_name);
-    localStorage.setItem('nc_logo_url', result.logo_url ?? '');
-    localStorage.setItem('nc_primary_color', result.primary_color ?? '#000000');
+    // Armazenar token e dados específicos do tenant
+    localStorage.setItem(`nc_token_${tenantSlug}`, result.token);
+    localStorage.setItem(`nc_display_name_${tenantSlug}`, result.display_name);
+    localStorage.setItem(`nc_logo_url_${tenantSlug}`, result.logo_url ?? '');
+    localStorage.setItem(`nc_primary_color_${tenantSlug}`, result.primary_color ?? '#000000');
 
     const payload = parseJwtPayload(result.token);
 
@@ -99,11 +118,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signOut = () => {
-    localStorage.removeItem('nc_token');
-    localStorage.removeItem('nc_tenant_slug');
-    localStorage.removeItem('nc_display_name');
-    localStorage.removeItem('nc_logo_url');
-    localStorage.removeItem('nc_primary_color');
+    const currentSlug = getCurrentTenantSlug();
+    if (currentSlug) {
+      // Remover dados específicos do tenant atual
+      localStorage.removeItem(`nc_token_${currentSlug}`);
+      localStorage.removeItem(`nc_display_name_${currentSlug}`);
+      localStorage.removeItem(`nc_logo_url_${currentSlug}`);
+      localStorage.removeItem(`nc_primary_color_${currentSlug}`);
+    }
     setUser(null);
   };
 
