@@ -10,10 +10,18 @@ api.interceptors.request.use((config) => {
     config.headers['Authorization'] = `Bearer ${token}`;
   }
 
-  // Login e create_admin são funções do schema master, não precisam de Accept-Profile
-  const isAuthEndpoint = config.url?.includes('/rpc/login') || config.url?.includes('/rpc/create_admin');
+  // Endpoints do schema master precisam do header Accept-Profile: master
+  const isMasterEndpoint =
+    config.url?.includes('/rpc/login') ||
+    config.url?.includes('/rpc/create_admin') ||
+    config.url?.includes('/tenants');
 
-  if (slug && !isAuthEndpoint) {
+  if (isMasterEndpoint) {
+    // Forçar schema master para esses endpoints
+    config.headers['Accept-Profile'] = 'master';
+    config.headers['Content-Profile'] = 'master';
+  } else if (slug) {
+    // Usar schema do tenant para outros endpoints
     config.headers['Accept-Profile'] = slug;
     config.headers['Content-Profile'] = slug;
   }
