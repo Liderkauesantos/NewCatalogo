@@ -43,11 +43,24 @@ services:
     ports:
       - "3000:3000"
 
+  # Serviço de assinatura Cloudinary
+  cloudinary-signature:
+    build: ./cloudinary-service
+    restart: unless-stopped
+    environment:
+      CLOUDINARY_CLOUD_NAME: ${CLOUDINARY_CLOUD_NAME}
+      CLOUDINARY_API_KEY: ${CLOUDINARY_API_KEY}
+      CLOUDINARY_API_SECRET: ${CLOUDINARY_API_SECRET}
+      PORT: 3001
+    ports:
+      - "3001:3001"
+
   nginx:
     image: nginx:alpine
     restart: unless-stopped
     depends_on:
       - postgrest
+      - cloudinary-signature
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf
       - ./frontend/dist:/usr/share/nginx/html
