@@ -2,12 +2,13 @@ import { useAllProducts } from "@/hooks/useProducts";
 import { useOrders } from "@/hooks/useOrders";
 import { useAllCarouselSlides } from "@/hooks/useCarouselSlides";
 import { Package, ShoppingBag, Images, TrendingUp, AlertTriangle } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 
 export default function AdminDashboard() {
   const { data: products = [] } = useAllProducts();
   const { data: orders = [] } = useOrders();
   const { data: slides = [] } = useAllCarouselSlides();
+  const { slug } = useParams();
 
   const outOfStock = products.filter((p) => p.stock_quantity === 0).length;
   const activeProducts = products.filter((p) => p.is_active).length;
@@ -22,7 +23,7 @@ export default function AdminDashboard() {
       icon: Package,
       color: "text-primary",
       bg: "bg-primary/10",
-      to: "/admin/produtos",
+      to: `/${slug}/admin/produtos`,
     },
     {
       label: "Pedidos recebidos",
@@ -31,7 +32,7 @@ export default function AdminDashboard() {
       icon: ShoppingBag,
       color: "text-blue-600",
       bg: "bg-blue-50",
-      to: "/admin/pedidos",
+      to: `/${slug}/admin/pedidos`,
     },
     {
       label: "Slides do carrossel",
@@ -40,7 +41,7 @@ export default function AdminDashboard() {
       icon: Images,
       color: "text-emerald-600",
       bg: "bg-emerald-50",
-      to: "/admin/carrossel",
+      to: `/${slug}/admin/carrossel`,
     },
     {
       label: "Faturamento total",
@@ -49,7 +50,7 @@ export default function AdminDashboard() {
       icon: TrendingUp,
       color: "text-violet-600",
       bg: "bg-violet-50",
-      to: "/admin/pedidos",
+      to: `/${slug}/admin/pedidos`,
     },
   ];
 
@@ -66,7 +67,7 @@ export default function AdminDashboard() {
           <AlertTriangle className="h-5 w-5 text-destructive shrink-0" />
           <p className="text-sm text-destructive font-medium">
             {outOfStock} produto{outOfStock > 1 ? "s" : ""} sem estoque —{" "}
-            <Link to="/admin/produtos" className="underline font-bold">verificar</Link>
+            <Link to={`/${slug}/admin/produtos`} className="underline font-bold">verificar</Link>
           </p>
         </div>
       )}
@@ -96,7 +97,7 @@ export default function AdminDashboard() {
         <div className="bg-card rounded-2xl border border-border p-5">
           <div className="flex items-center justify-between mb-4">
             <h2 className="font-bold text-foreground">Últimos Pedidos</h2>
-            <Link to="/admin/pedidos" className="text-sm text-primary font-medium hover:underline">
+            <Link to={`/${slug}/admin/pedidos`} className="text-sm text-primary font-medium hover:underline">
               Ver todos →
             </Link>
           </div>

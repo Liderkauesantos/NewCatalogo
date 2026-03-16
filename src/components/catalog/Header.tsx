@@ -2,7 +2,7 @@ import { ShoppingBag, Package, Lock, Download } from "lucide-react";
 import { useCart } from "@/contexts/CartContext";
 import { useBrandSettings } from "@/hooks/useBrandSettings";
 import { Badge } from "@/components/ui/badge";
-import { Link } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import { useState, useEffect } from "react";
 
 interface HeaderProps {
@@ -12,6 +12,7 @@ interface HeaderProps {
 export function Header({ onCartClick }: HeaderProps) {
   const { totalItems } = useCart();
   const { data: brand } = useBrandSettings();
+  const { slug } = useParams();
   const [isInstalled, setIsInstalled] = useState(false);
 
   useEffect(() => {
@@ -42,7 +43,7 @@ export function Header({ onCartClick }: HeaderProps) {
         <div className="flex items-center gap-3">
           {!isInstalled && (
             <Link
-              to="/install"
+              to={`/${slug}/install`}
               className="flex items-center gap-1.5 px-3 py-2 text-muted-foreground hover:text-foreground rounded-xl text-sm font-medium hover:bg-muted transition-all"
               title="Instalar app">
               <Download className="h-4 w-4" />
@@ -50,7 +51,7 @@ export function Header({ onCartClick }: HeaderProps) {
             </Link>
           )}
           <Link
-            to="/admin/login"
+            to={`/${slug}/admin/login`}
             className="flex items-center gap-1.5 px-3 py-2 text-muted-foreground hover:text-foreground rounded-xl text-sm font-medium hover:bg-muted transition-all"
             title="Área administrativa">
             <Lock className="h-4 w-4" />

@@ -30,7 +30,7 @@ services:
         condition: service_healthy
     environment:
       PGRST_DB_URI: postgres://authenticator:${AUTHENTICATOR_PASSWORD}@postgres:5432/new_catalogo
-      PGRST_DB_SCHEMAS: master
+      PGRST_DB_SCHEMAS: master,demo
       PGRST_DB_ANON_ROLE: anon
       PGRST_DB_PRE_REQUEST: master.set_tenant_schema
       PGRST_JWT_SECRET: ${JWT_SECRET}
