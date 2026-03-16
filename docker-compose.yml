@@ -3,6 +3,8 @@ services:
   postgres:
     image: postgres:15-alpine
     restart: unless-stopped
+    ports:
+      - "5432:5432"
     environment:
       POSTGRES_DB: new_catalogo
       POSTGRES_USER: postgres

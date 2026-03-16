@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { CartProvider } from "@/contexts/CartContext";
 import { AuthProvider } from "@/contexts/AuthContext";
 import Index from "./pages/Index";
+import Landing from "./pages/Landing";
 import { AdminLayout } from "./components/admin/AdminLayout";
 
 const Login = lazy(() => import("./pages/admin/Login"));
@@ -33,9 +34,8 @@ const App = () => (
           <BrowserRouter>
             <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><div className="h-8 w-8 border-4 border-primary border-t-transparent rounded-full animate-spin" /></div>}>
               <Routes>
-                {/* Rota raiz — redireciona ou mostra landing */}
-                <Route path="/" element={<NotFound />} />
-                <Route path="/install" element={<Install />} />
+                {/* Rota raiz — landing page com lista de tenants */}
+                <Route path="/" element={<Landing />} />
 
                 {/* Rotas com slug do tenant: /:slug/... */}
                 <Route path="/:slug">
