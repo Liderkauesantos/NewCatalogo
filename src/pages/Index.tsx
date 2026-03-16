@@ -70,9 +70,6 @@ const Index = () => {
       {/* Footer simples */}
       <footer className="mt-16 border-t border-border bg-card">
         <div className="container mx-auto px-4 py-8 text-center text-sm text-muted-foreground">
-          <div className="flex items-center justify-center gap-2">
-            <img src={brand?.logo_url || logo} alt={brand?.company_name || "Logo"} className="h-50 w-auto" />
-          </div>
           <p className="mt-1">© {new Date().getFullYear()} {brand?.company_name || ""} — Todos os direitos reservados</p>
         </div>
       </footer>
