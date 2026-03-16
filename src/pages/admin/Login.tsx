@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
-import { useNavigate, useParams } from "react-router-dom";
-import { Package, LogIn } from "lucide-react";
+import { useNavigate, useParams, Link } from "react-router-dom";
+import { Package, LogIn, ArrowLeft } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -76,6 +76,7 @@ export default function Login() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
+                autoComplete="email"
                 className="rounded-xl"
               />
             </div>
@@ -92,14 +93,27 @@ export default function Login() {
                 className="rounded-xl"
               />
             </div>
-            <Button type="submit" className="w-full rounded-xl h-11 font-bold gap-2" disabled={loading}>
-              {loading ? (
-                <div className="h-4 w-4 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin" />
-              ) : (
-                <LogIn className="h-4 w-4" />
-              )}
-              Entrar
-            </Button>
+            <div className="flex gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                className="rounded-xl h-11 font-medium gap-2"
+                asChild
+              >
+                <Link to={`/${slug ?? ''}`}>
+                  <ArrowLeft className="h-4 w-4" />
+                  Voltar
+                </Link>
+              </Button>
+              <Button type="submit" className="flex-1 rounded-xl h-11 font-bold gap-2" disabled={loading}>
+                {loading ? (
+                  <div className="h-4 w-4 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin" />
+                ) : (
+                  <LogIn className="h-4 w-4" />
+                )}
+                Entrar
+              </Button>
+            </div>
           </form>
         </CardContent>
       </Card>
