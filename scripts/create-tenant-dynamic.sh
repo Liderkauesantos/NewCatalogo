@@ -1,16 +1,12 @@
 #!/bin/bash
 
 # ============================================================
-# Script de Onboarding de Novo Cliente/Tenant
+# Script de Criação de Tenant - MULTI-TENANCY DINÂMICO
 # ============================================================
-# Uso: ./scripts/create-tenant.sh
+# Uso: ./scripts/create-tenant-dynamic.sh
 # 
-# Este script cria um novo tenant de forma interativa:
-# - Registra no master.tenants
-# - Cria schema e tabelas
-# - Cria usuário admin
-# - Popula dados iniciais
-# - Recarrega PostgREST
+# NOVO: Não precisa mais reiniciar containers!
+# Usa master.provision_tenant() + NOTIFY pgrst
 # ============================================================
 
 set -e
@@ -20,11 +16,11 @@ RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
-NC='\033[0m' # No Color
+NC='\033[0m'
 
-echo -e "${BLUE}╔════════════════════════════════════════════════╗${NC}"
-echo -e "${BLUE}║   🚀 Onboarding de Novo Cliente/Tenant        ║${NC}"
-echo -e "${BLUE}╔════════════════════════════════════════════════╗${NC}"
+echo -e "${BLUE}╔════════════════════════════════════════════════════════════╗${NC}"
+echo -e "${BLUE}║   🚀 Criar Novo Tenant (Multi-Tenancy Dinâmico)          ║${NC}"
+echo -e "${BLUE}╚════════════════════════════════════════════════════════════╝${NC}"
 echo ""
 
 # Verificar se Docker está rodando
@@ -41,7 +37,7 @@ fi
 echo -e "${GREEN}📝 Informações do Cliente${NC}"
 echo ""
 
-# Slug (identificador único)
+# Slug
 while true; do
     read -p "Slug do tenant (ex: casarossi, lojatech): " SLUG
     SLUG=$(echo "$SLUG" | tr '[:upper:]' '[:lower:]' | tr -d ' ')
@@ -138,122 +134,52 @@ if [[ ! "$CONFIRM" =~ ^[sS]$ ]]; then
 fi
 
 # ============================================================
-# Criar SQL temporário
+# Criar tenant usando master.provision_tenant()
 # ============================================================
 
 echo ""
 echo -e "${BLUE}🔨 Criando tenant...${NC}"
 
-TEMP_SQL="/tmp/create-tenant-$SLUG.sql"
+# Escapar aspas simples nos parâmetros
+DISPLAY_NAME_ESC=$(echo "$DISPLAY_NAME" | sed "s/'/''/g")
+ADMIN_PASSWORD_ESC=$(echo "$ADMIN_PASSWORD" | sed "s/'/''/g")
 
-cat > "$TEMP_SQL" <<EOF
--- ============================================================
--- Onboarding do tenant: $SLUG
--- Gerado automaticamente em $(date)
--- ============================================================
-
-BEGIN;
-
--- PASSO 1: Registrar tenant no master
-INSERT INTO master.tenants (slug, display_name, db_schema, whatsapp, logo_url, primary_color)
-VALUES (
+# Executar função SQL
+RESULT=$(sudo docker exec newcatalogo-postgres-1 psql -U postgres -d new_catalogo -tAc "
+SELECT master.provision_tenant(
     '$SLUG',
-    '$DISPLAY_NAME',
-    '$SLUG',
+    '$DISPLAY_NAME_ESC',
     '$WHATSAPP',
-    NULL,
-    '$PRIMARY_COLOR'
-);
-
--- PASSO 2: Criar schema e tabelas do cliente
-SELECT master.create_tenant_schema('$SLUG');
-
--- PASSO 3: Popular brand_settings
-INSERT INTO $SLUG.brand_settings (company_name, logo_url, whatsapp, primary_color)
-SELECT display_name, logo_url, whatsapp, primary_color
-FROM master.tenants WHERE slug = '$SLUG';
-
--- PASSO 4: Criar usuário admin
-INSERT INTO master.tenant_users (tenant_id, email, password_hash, role)
-SELECT
-    id,
+    '$PRIMARY_COLOR',
     '$ADMIN_EMAIL',
-    crypt('$ADMIN_PASSWORD', gen_salt('bf')),
-    'admin'
-FROM master.tenants WHERE slug = '$SLUG';
+    '$ADMIN_PASSWORD_ESC'
+);
+")
 
--- PASSO 5: Dados iniciais
-
--- Categorias padrão
-INSERT INTO $SLUG.categories (name, sort_order) VALUES
-    ('Eletrônicos', 1),
-    ('Acessórios', 2),
-    ('Vestuário', 3),
-    ('Casa e Decoração', 4),
-    ('Esportes', 5);
-
--- Métodos de pagamento
-INSERT INTO $SLUG.payment_methods (name, is_active, display_order) VALUES
-    ('Pix', TRUE, 1),
-    ('Dinheiro', TRUE, 2),
-    ('Cartão de Crédito', TRUE, 3),
-    ('Cartão de Débito', TRUE, 4);
-
--- WhatsApp
-INSERT INTO $SLUG.whatsapp_settings (phone_number, label, is_active) VALUES
-    ('$WHATSAPP', 'Principal', TRUE);
-
--- Carousel inicial
-INSERT INTO $SLUG.carousel_slides (title, subtitle, cta_text, bg_gradient, display_order, is_active) VALUES
-    ('Bem-vindo à $DISPLAY_NAME', 'Confira nossos produtos', 'Ver Catálogo', 'from-blue-600 via-blue-500 to-cyan-400', 1, TRUE);
-
-COMMIT;
-
--- Mensagem de sucesso
-DO \$\$
-BEGIN
-    RAISE NOTICE '✅ Tenant % criado com sucesso!', '$SLUG';
-    RAISE NOTICE '📧 Admin: %', '$ADMIN_EMAIL';
-    RAISE NOTICE '🔗 URL: http://localhost:8080/%', '$SLUG';
-END \$\$;
-EOF
-
-# ============================================================
-# Executar SQL
-# ============================================================
-
-echo -e "${BLUE}📊 Executando SQL...${NC}"
-
-if sudo docker exec -i newcatalogo-postgres-1 psql -U postgres -d new_catalogo < "$TEMP_SQL"; then
+# Verificar resultado
+if [ $? -eq 0 ]; then
     echo -e "${GREEN}✅ Tenant criado com sucesso!${NC}"
+    echo ""
+    echo -e "${BLUE}📊 Resultado:${NC}"
+    echo "$RESULT" | python3 -m json.tool 2>/dev/null || echo "$RESULT"
 else
     echo -e "${RED}❌ Erro ao criar tenant${NC}"
-    rm -f "$TEMP_SQL"
     exit 1
 fi
 
-# Limpar arquivo temporário
-rm -f "$TEMP_SQL"
-
 # ============================================================
-# Atualizar schemas do PostgREST
+# Atualizar PGRST_DB_SCHEMAS e recarregar PostgREST
 # ============================================================
 
+echo ""
 echo -e "${BLUE}🔄 Atualizando schemas do PostgREST...${NC}"
 
-# Obter diretório do script
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-
-# Executar script de atualização de schemas
-if [ -f "$SCRIPT_DIR/update-postgrest-schemas.sh" ]; then
-    "$SCRIPT_DIR/update-postgrest-schemas.sh"
+if [ -f "$SCRIPT_DIR/update-schemas-postgrest.sh" ]; then
+    "$SCRIPT_DIR/update-schemas-postgrest.sh"
 else
-    # Fallback: apenas recarregar
-    POSTGREST_CONTAINER=$(sudo docker ps -qf "name=postgrest")
-    if [ -n "$POSTGREST_CONTAINER" ]; then
-        sudo docker kill --signal=SIGUSR1 "$POSTGREST_CONTAINER" > /dev/null 2>&1
-        echo -e "${GREEN}✅ PostgREST recarregado${NC}"
-    fi
+    echo -e "${YELLOW}⚠️  Script update-schemas-postgrest.sh não encontrado${NC}"
+    echo -e "${YELLOW}Execute manualmente: ./scripts/update-schemas-postgrest.sh${NC}"
 fi
 
 # ============================================================
@@ -261,17 +187,17 @@ fi
 # ============================================================
 
 echo ""
-echo -e "${GREEN}╔════════════════════════════════════════════════╗${NC}"
-echo -e "${GREEN}║   ✅ Tenant criado com sucesso!               ║${NC}"
-echo -e "${GREEN}╚════════════════════════════════════════════════╝${NC}"
+echo -e "${GREEN}╔════════════════════════════════════════════════════════════╗${NC}"
+echo -e "${GREEN}║   ✅ Tenant criado com sucesso!                          ║${NC}"
+echo -e "${GREEN}╚════════════════════════════════════════════════════════════╝${NC}"
 echo ""
 echo -e "${BLUE}📋 Informações de Acesso:${NC}"
 echo ""
 echo -e "  🌐 URL do Catálogo:"
-echo -e "     ${GREEN}http://localhost:8080/$SLUG${NC}"
+echo -e "     ${GREEN}http://localhost/$SLUG${NC}"
 echo ""
 echo -e "  🔐 Painel Admin:"
-echo -e "     ${GREEN}http://localhost:8080/$SLUG/admin${NC}"
+echo -e "     ${GREEN}http://localhost/$SLUG/admin${NC}"
 echo ""
 echo -e "  📧 Email: ${GREEN}$ADMIN_EMAIL${NC}"
 echo -e "  🔑 Senha: ${GREEN}$ADMIN_PASSWORD${NC}"
@@ -281,4 +207,6 @@ echo -e "  1. Acesse o painel admin"
 echo -e "  2. Configure a logo da empresa"
 echo -e "  3. Adicione produtos"
 echo -e "  4. Personalize o catálogo"
+echo ""
+echo -e "${GREEN}✨ Tenant disponível IMEDIATAMENTE (sem restart!)${NC}"
 echo ""

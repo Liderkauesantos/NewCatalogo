@@ -18,6 +18,7 @@ services:
       - ./sql/03-master-schema.sql:/docker-entrypoint-initdb.d/03-master-schema.sql
       - ./sql/04-roles.sql:/docker-entrypoint-initdb.d/04-roles.sql
       - ./sql/05-init-authenticator-password.sh:/docker-entrypoint-initdb.d/05-init-authenticator-password.sh
+      - ./sql/07-dynamic-multitenancy.sql:/docker-entrypoint-initdb.d/07-dynamic-multitenancy.sql
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -U postgres -d new_catalogo" ]
       interval: 10s
@@ -32,9 +33,10 @@ services:
         condition: service_healthy
     environment:
       PGRST_DB_URI: postgres://authenticator:${AUTHENTICATOR_PASSWORD}@postgres:5432/new_catalogo
-      PGRST_DB_SCHEMAS: casarossi,demo,lojateste,master
+      # SCHEMAS DINÂMICOS: Lista todos os schemas para validação do Accept-Profile
+      PGRST_DB_SCHEMAS: casarossi,demo,lojaflavio,lojakaue,lojanew,lojateste,master,public
       PGRST_DB_ANON_ROLE: anon
-      PGRST_DB_PRE_REQUEST: master.set_tenant_schema
+      PGRST_DB_PRE_REQUEST: set_tenant
       PGRST_JWT_SECRET: ${JWT_SECRET}
       PGRST_DB_EXTRA_SEARCH_PATH: master,public
       PGRST_SERVER_CORS_ALLOWED_ORIGINS: ""

@@ -1,40 +1,44 @@
-# 📚 Guia Completo de Deploy em Produção - New Catálogo
+# 📚 Guia de Deploy - New Catálogo
 
-Este documento contém o passo a passo completo para colocar o New Catálogo em produção em um servidor VPS.
-
----
-
-## 📋 Pré-requisitos
-
-Antes de começar, você precisa ter:
-
-- ✅ Um servidor VPS (Ubuntu 20.04+ ou Debian 11+)
-- ✅ Acesso SSH ao servidor (root ou sudo)
-- ✅ Um domínio apontando para o IP do servidor (opcional, mas recomendado)
-- ✅ Pelo menos 2GB de RAM e 20GB de disco
+Guia objetivo para implantar o New Catálogo em servidor de produção.
 
 ---
 
-## 🚀 Passo 1: Preparar o Servidor
+## 📋 Requisitos
 
-### 1.1. Conectar ao servidor via SSH
+- ✅ Servidor Ubuntu 20.04+ ou Debian 11+
+- ✅ Acesso SSH (root ou sudo)
+- ✅ Mínimo: 2GB RAM, 20GB disco
+- ✅ Domínio (opcional)
+
+---
+
+## 🎯 Escolha sua Opção de Deploy
+
+### **Opção 1: Docker (Recomendado)** ✅
+- Mais fácil de configurar
+- Isolamento completo
+- Fácil de atualizar
+- **Use esta opção se possível**
+
+### **Opção 2: PostgreSQL Local**
+- Usa PostgreSQL já instalado no servidor
+- Mais controle sobre o banco
+- Requer mais configuração manual
+
+---
+
+## � OPÇÃO 1: Deploy com Docker (Recomendado)
+
+### **1. Preparar Servidor**
 
 ```bash
-ssh root@SEU_IP_DO_SERVIDOR
-# ou
+# Conectar via SSH
 ssh usuario@SEU_IP_DO_SERVIDOR
-```
 
-### 1.2. Atualizar o sistema
+# Atualizar sistema
+sudo apt update && sudo apt upgrade -y
 
-```bash
-sudo apt update
-sudo apt upgrade -y
-```
-
-### 1.3. Instalar dependências necessárias
-
-```bash
 # Instalar Docker
 curl -fsSL https://get.docker.com -o get-docker.sh
 sudo sh get-docker.sh
@@ -52,290 +56,205 @@ docker --version
 docker-compose --version
 node --version
 npm --version
-```
 
-### 1.4. Configurar firewall (UFW)
-
-```bash
-# Permitir SSH, HTTP e HTTPS
-sudo ufw allow 22/tcp
-sudo ufw allow 80/tcp
-sudo ufw allow 443/tcp
+# Configurar firewall
+sudo ufw allow 22/tcp   # SSH
+sudo ufw allow 80/tcp   # HTTP
+sudo ufw allow 443/tcp  # HTTPS
 sudo ufw enable
-sudo ufw status
 ```
 
----
-
-## 📦 Passo 2: Clonar o Projeto
-
-### 2.1. Criar diretório para aplicações
+### **2. Clonar Projeto**
 
 ```bash
+# Criar diretório
 sudo mkdir -p /var/www
 cd /var/www
-```
 
-### 2.2. Clonar o repositório
-
-```bash
-# Se usar Git
+# Clonar repositório
 sudo git clone https://github.com/SEU_USUARIO/NewCatalogo.git
 cd NewCatalogo
 
-# Ou fazer upload manual via SCP/SFTP
-```
-
-### 2.3. Dar permissões corretas
-
-```bash
+# Ajustar permissões
 sudo chown -R $USER:$USER /var/www/NewCatalogo
 ```
 
----
-
-## 🔐 Passo 3: Configurar Variáveis de Ambiente
-
-### 3.1. Criar arquivo .env
+### **3. Configurar Variáveis de Ambiente**
 
 ```bash
-cd /var/www/NewCatalogo
+# Copiar template
 cp .env.docker .env
+
+# Gerar senhas seguras
+POSTGRES_PASS=$(openssl rand -base64 32)
+AUTH_PASS=$(openssl rand -base64 32)
+JWT_SECRET=$(openssl rand -base64 32)
+
+# Configurar .env automaticamente
+sed -i "s/POSTGRES_PASSWORD=.*/POSTGRES_PASSWORD=$POSTGRES_PASS/" .env
+sed -i "s/AUTHENTICATOR_PASSWORD=.*/AUTHENTICATOR_PASSWORD=$AUTH_PASS/" .env
+sed -i "s/JWT_SECRET=.*/JWT_SECRET=$JWT_SECRET/" .env
+
+# Configurar credenciais do Cloudflare R2
 nano .env
 ```
 
-### 3.2. Gerar senhas seguras
-
-```bash
-# Gerar senhas aleatórias fortes
-openssl rand -base64 32  # Para POSTGRES_PASSWORD
-openssl rand -base64 32  # Para AUTHENTICATOR_PASSWORD
-openssl rand -base64 32  # Para JWT_SECRET
-```
-
-### 3.3. Editar o arquivo .env
-
+**Edite manualmente no .env:**
 ```env
-# Banco de dados
-POSTGRES_PASSWORD=COLE_SENHA_GERADA_1_AQUI
-AUTHENTICATOR_PASSWORD=COLE_SENHA_GERADA_2_AQUI
-JWT_SECRET=COLE_SENHA_GERADA_3_AQUI
+# Cloudflare R2 (obrigatório para upload de imagens)
+R2_ACCOUNT_ID=seu_account_id
+R2_ACCESS_KEY_ID=sua_access_key
+R2_SECRET_ACCESS_KEY=sua_secret_key
+R2_BUCKET_NAME=newcatalogo
+R2_PUBLIC_URL=https://pub-xxxxx.r2.dev
+VITE_R2_SERVICE_URL=http://localhost:3001
 ```
 
-**⚠️ IMPORTANTE:** Guarde essas senhas em um local seguro (gerenciador de senhas)!
+**⚠️ IMPORTANTE:** Guarde as senhas geradas em local seguro!
 
----
-
-## 🏗️ Passo 4: Build e Deploy
-
-### 4.1. Instalar dependências do Node.js
+### **4. Build e Deploy**
 
 ```bash
+# Instalar dependências
 npm install
-```
 
-### 4.2. Fazer build do frontend
-
-```bash
+# Build do frontend
 npm run build
-```
 
-### 4.3. Preparar arquivos para o Nginx
-
-```bash
+# Preparar arquivos para Nginx
 mkdir -p frontend/dist
 cp -r dist/* frontend/dist/
-```
-
-### 4.4. Copiar assets públicos
-
-```bash
 cp public/* frontend/dist/
-```
 
-### 4.5. Subir os containers Docker
-
-```bash
+# Subir containers Docker
 sudo docker compose up -d
-```
 
-### 4.6. Verificar se tudo está rodando
-
-```bash
+# Verificar status
 sudo docker compose ps
 ```
 
-Você deve ver 3 containers rodando:
-- `newcatalogo-postgres-1`
-- `newcatalogo-postgrest-1`
-- `newcatalogo-nginx-1`
+**Containers esperados:**
+- ✅ `newcatalogo-postgres-1` (PostgreSQL)
+- ✅ `newcatalogo-postgrest-1` (API REST)
+- ✅ `newcatalogo-r2-service-1` (Upload de imagens)
+- ✅ `newcatalogo-nginx-1` (Servidor web)
+
+### **5. Testar Instalação**
+
+```bash
+# Testar API
+curl http://localhost:3000/
+# Deve retornar: OpenAPI spec
+
+# Testar R2 Service
+curl http://localhost:3001/health
+# Deve retornar: {"status":"ok"}
+
+# Acessar no navegador
+http://SEU_IP_DO_SERVIDOR
+# Deve mostrar landing page
+```
+
+### **6. Criar Primeiro Tenant**
+
+```bash
+# Executar script interativo
+./scripts/create-tenant-dynamic.sh
+```
+
+**Informações solicitadas:**
+- Slug: `demo` (URL será: /demo/)
+- Nome: `Loja Demo`
+- WhatsApp: `5511999999999`
+- Cor primária: `#2563eb`
+- Email admin: `admin@demo.com`
+- Senha: `admin123` (troque em produção!)
+
+**O script faz automaticamente:**
+1. Cria schema no PostgreSQL
+2. Cria tabelas do tenant
+3. Aplica permissões
+4. Popula dados iniciais
+5. Cria usuário admin
+6. Atualiza PostgREST (~1s downtime)
+
+**Testar tenant criado:**
+```bash
+# Acessar catálogo público
+http://SEU_IP/demo/
+
+# Acessar painel admin
+http://SEU_IP/demo/admin/login
+Email: admin@demo.com
+Senha: admin123
+```
 
 ---
 
-## 🌐 Passo 5: Configurar Domínio (Opcional)
+## 🌐 Configurar Domínio (Opcional)
 
-### 5.1. Apontar domínio para o servidor
-
-No painel do seu provedor de domínio (Registro.br, GoDaddy, etc.):
-
+**Configurar DNS:**
 ```
-Tipo: A
-Nome: @
-Valor: SEU_IP_DO_SERVIDOR
-TTL: 3600
-
-Tipo: A
-Nome: www
-Valor: SEU_IP_DO_SERVIDOR
-TTL: 3600
+Tipo: A | Nome: @ | Valor: SEU_IP | TTL: 3600
+Tipo: A | Nome: www | Valor: SEU_IP | TTL: 3600
 ```
 
-### 5.2. Aguardar propagação DNS (pode levar até 48h)
-
+**Verificar propagação:**
 ```bash
-# Verificar se o DNS propagou
 nslookup seudominio.com.br
 ```
 
 ---
 
-## 🔒 Passo 6: Configurar SSL/HTTPS (Recomendado)
-
-### 6.1. Instalar Certbot
+## 🔒 Configurar SSL/HTTPS (Recomendado)
 
 ```bash
+# Instalar Certbot
 sudo apt install certbot python3-certbot-nginx -y
-```
 
-### 6.2. Atualizar configuração do Nginx
-
-Edite o arquivo `nginx/nginx.conf` e adicione seu domínio:
-
-```bash
+# Editar nginx.conf
 nano nginx/nginx.conf
-```
-
-Adicione na linha `server_name`:
-
-```nginx
-server_name seudominio.com.br www.seudominio.com.br;
-```
-
-### 6.3. Reiniciar Nginx
-
-```bash
-sudo docker compose restart nginx
-```
-
-### 6.4. Gerar certificado SSL
-
-```bash
-# Parar o Nginx temporariamente
-sudo docker compose stop nginx
-
-# Gerar certificado
-sudo certbot certonly --standalone -d seudominio.com.br -d www.seudominio.com.br
+# Adicionar: server_name seudominio.com.br www.seudominio.com.br;
 
 # Reiniciar Nginx
+sudo docker compose restart nginx
+
+# Gerar certificado
+sudo docker compose stop nginx
+sudo certbot certonly --standalone -d seudominio.com.br -d www.seudominio.com.br
 sudo docker compose start nginx
-```
 
-### 6.5. Configurar renovação automática
-
-```bash
-# Testar renovação
-sudo certbot renew --dry-run
-
-# Adicionar ao cron para renovação automática
+# Renovação automática
 sudo crontab -e
+# Adicionar: 0 3 * * * certbot renew --quiet --post-hook "docker compose -f /var/www/NewCatalogo/docker-compose.yml restart nginx"
 ```
 
-Adicione esta linha:
-
-```cron
-0 3 * * * certbot renew --quiet --post-hook "docker compose -f /var/www/NewCatalogo/docker-compose.yml restart nginx"
-```
 
 ---
 
-## 🎯 Passo 7: Testar a Aplicação
-
-### 7.1. Acessar via navegador
-
-```
-http://SEU_IP_OU_DOMINIO
-```
-
-Você deve ver a landing page do New Catálogo.
-
-### 7.2. Testar login admin
-
-```
-http://SEU_IP_OU_DOMINIO/demo/admin/login
-
-Email: admin@demo.com
-Senha: admin123
-```
-
-### 7.3. Verificar logs (se houver problemas)
-
-```bash
-# Ver logs de todos os containers
-sudo docker compose logs -f
-
-# Ver logs apenas do Nginx
-sudo docker compose logs -f nginx
-
-# Ver logs apenas do PostgREST
-sudo docker compose logs -f postgrest
-
-# Ver logs apenas do PostgreSQL
-sudo docker compose logs -f postgres
-```
-
----
-
-## 🔄 Passo 8: Atualizar a Aplicação
-
-Quando você fizer alterações no código e quiser atualizar a produção:
-
-### 8.1. Método Rápido (usando o script)
+## 🔄 Atualizar Aplicação
 
 ```bash
 cd /var/www/NewCatalogo
+
+# Método rápido
 ./deploy.sh
-```
 
-### 8.2. Método Manual
-
-```bash
-cd /var/www/NewCatalogo
-
-# Atualizar código
+# Ou manual
 git pull
-
-# Instalar novas dependências (se houver)
 npm install
-
-# Rebuild frontend
 npm run build
-
-# Atualizar arquivos do Nginx
-rm -rf frontend/dist
-mkdir -p frontend/dist
+rm -rf frontend/dist && mkdir -p frontend/dist
 cp -r dist/* frontend/dist/
 cp public/* frontend/dist/
-
-# Reiniciar containers
 sudo docker compose restart
 ```
 
 ---
 
-## 🛡️ Passo 9: Segurança e Manutenção
+## � Backup e Manutenção
 
-### 9.1. Backup do banco de dados
-
+### **Backup Manual**
 ```bash
 # Criar backup
 sudo docker exec newcatalogo-postgres-1 pg_dump -U postgres new_catalogo > backup_$(date +%Y%m%d).sql
@@ -344,199 +263,306 @@ sudo docker exec newcatalogo-postgres-1 pg_dump -U postgres new_catalogo > backu
 sudo docker exec -i newcatalogo-postgres-1 psql -U postgres new_catalogo < backup_20240316.sql
 ```
 
-### 9.2. Configurar backup automático
-
+### **Backup Automático**
 ```bash
-# Criar script de backup
+# Criar script
 sudo nano /usr/local/bin/backup-catalogo.sh
 ```
-
-Conteúdo do script:
 
 ```bash
 #!/bin/bash
 BACKUP_DIR="/var/backups/newcatalogo"
 mkdir -p $BACKUP_DIR
 docker exec newcatalogo-postgres-1 pg_dump -U postgres new_catalogo > $BACKUP_DIR/backup_$(date +%Y%m%d_%H%M%S).sql
-# Manter apenas últimos 7 dias
 find $BACKUP_DIR -name "backup_*.sql" -mtime +7 -delete
 ```
 
-Tornar executável e adicionar ao cron:
-
 ```bash
+# Tornar executável
 sudo chmod +x /usr/local/bin/backup-catalogo.sh
+
+# Agendar (todo dia às 2h)
 sudo crontab -e
+# Adicionar: 0 2 * * * /usr/local/bin/backup-catalogo.sh
 ```
 
-Adicionar:
-
-```cron
-0 2 * * * /usr/local/bin/backup-catalogo.sh
+### **Monitoramento**
+```bash
+docker stats              # Uso de recursos
+df -h                     # Espaço em disco
+free -h                   # Memória
+sudo docker compose logs -f  # Logs em tempo real
 ```
 
-### 9.3. Monitoramento
+---
+
+## �️ OPÇÃO 2: Deploy com PostgreSQL Local
+
+**Use se já tem PostgreSQL instalado no servidor.**
+
+### **1. Preparar Servidor**
 
 ```bash
-# Ver uso de recursos
-docker stats
+# Instalar PostgreSQL (se não tiver)
+sudo apt install postgresql postgresql-contrib -y
 
-# Ver espaço em disco
-df -h
+# Instalar Node.js e Nginx
+sudo apt install git curl nginx -y
+curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+sudo apt install nodejs -y
+```
 
-# Ver memória
-free -h
+### **2. Configurar PostgreSQL**
+
+```bash
+# Criar banco e usuário
+sudo -u postgres psql << EOF
+CREATE DATABASE new_catalogo;
+CREATE USER authenticator WITH PASSWORD 'SENHA_FORTE_AQUI';
+GRANT ALL PRIVILEGES ON DATABASE new_catalogo TO authenticator;
+\q
+EOF
+
+# Executar scripts SQL
+cd /var/www/NewCatalogo
+sudo -u postgres psql -d new_catalogo < sql/01-extensions.sql
+sudo -u postgres psql -d new_catalogo < sql/02-jwt.sql
+sudo -u postgres psql -d new_catalogo < sql/03-master-schema.sql
+sudo -u postgres psql -d new_catalogo < sql/04-roles.sql
+sudo -u postgres psql -d new_catalogo < sql/07-dynamic-multitenancy.sql
+```
+
+### **3. Instalar PostgREST**
+
+```bash
+# Baixar PostgREST
+wget https://github.com/PostgREST/postgrest/releases/download/v12.0.2/postgrest-v12.0.2-linux-static-x64.tar.xz
+tar -xf postgrest-v12.0.2-linux-static-x64.tar.xz
+sudo mv postgrest /usr/local/bin/
+sudo chmod +x /usr/local/bin/postgrest
+
+# Criar arquivo de configuração
+sudo nano /etc/postgrest.conf
+```
+
+```conf
+db-uri = "postgres://authenticator:SENHA@localhost:5432/new_catalogo"
+db-schemas = "public,master"
+db-anon-role = "anon"
+db-pre-request = "set_tenant"
+jwt-secret = "SEU_JWT_SECRET_AQUI"
+server-port = 3000
+```
+
+```bash
+# Criar serviço systemd
+sudo nano /etc/systemd/system/postgrest.service
+```
+
+```ini
+[Unit]
+Description=PostgREST API
+After=postgresql.service
+
+[Service]
+ExecStart=/usr/local/bin/postgrest /etc/postgrest.conf
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+```
+
+```bash
+# Iniciar PostgREST
+sudo systemctl daemon-reload
+sudo systemctl enable postgrest
+sudo systemctl start postgrest
+sudo systemctl status postgrest
+```
+
+### **4. Configurar Nginx**
+
+```bash
+sudo nano /etc/nginx/sites-available/newcatalogo
+```
+
+```nginx
+server {
+    listen 80;
+    server_name seudominio.com.br;
+
+    # API
+    location /api/ {
+        proxy_pass http://localhost:3000/;
+        proxy_set_header Host $host;
+    }
+
+    # Frontend
+    location / {
+        root /var/www/NewCatalogo/dist;
+        try_files $uri $uri/ /index.html;
+    }
+}
+```
+
+```bash
+# Ativar site
+sudo ln -s /etc/nginx/sites-available/newcatalogo /etc/nginx/sites-enabled/
+sudo nginx -t
+sudo systemctl restart nginx
+```
+
+### **5. Build Frontend e Criar Tenant**
+
+```bash
+cd /var/www/NewCatalogo
+npm install
+npm run build
+
+# Criar primeiro tenant
+./scripts/create-tenant-dynamic.sh
 ```
 
 ---
 
 ## 📝 Comandos Úteis
 
-### Docker Compose
-
+### **Docker (Opção 1)**
 ```bash
-# Ver status dos containers
-sudo docker compose ps
-
-# Ver logs
-sudo docker compose logs -f
-
-# Parar todos os containers
-sudo docker compose down
-
-# Iniciar containers
-sudo docker compose up -d
-
-# Reiniciar um container específico
-sudo docker compose restart nginx
-
-# Reconstruir containers (após mudanças no docker-compose.yml)
-sudo docker compose up -d --build
+sudo docker compose ps              # Status
+sudo docker compose logs -f         # Logs
+sudo docker compose down            # Parar
+sudo docker compose up -d           # Iniciar
+sudo docker compose restart nginx   # Reiniciar específico
 ```
 
-### Banco de Dados
-
+### **PostgreSQL**
 ```bash
-# Acessar PostgreSQL
+# Docker
 sudo docker exec -it newcatalogo-postgres-1 psql -U postgres -d new_catalogo
 
-# Listar schemas
-\dn
+# Local
+sudo -u postgres psql -d new_catalogo
 
-# Listar tabelas de um schema
-\dt master.*
-\dt demo.*
-
-# Sair do psql
-\q
+# Comandos SQL
+\dn                    # Listar schemas
+\dt master.*           # Tabelas do master
+\dt demo.*             # Tabelas do tenant demo
+\q                     # Sair
 ```
 
-### Nginx
-
+### **Criar Novos Tenants**
 ```bash
-# Testar configuração
-sudo docker exec newcatalogo-nginx-1 nginx -t
+# Interativo
+./scripts/create-tenant-dynamic.sh
 
-# Recarregar configuração
-sudo docker compose restart nginx
+# Via SQL direto
+sudo docker exec -it newcatalogo-postgres-1 psql -U postgres -d new_catalogo
+SELECT master.provision_tenant('novoloja', 'Nova Loja', '5511999999999', '#2563eb', 'admin@novoloja.com', 'senha123');
+```
+
+### **Logs**
+```bash
+# Docker
+sudo docker compose logs -f postgres
+sudo docker compose logs -f postgrest
+sudo docker compose logs -f nginx
+
+# Local
+sudo journalctl -u postgrest -f
+sudo tail -f /var/log/nginx/error.log
 ```
 
 ---
 
 ## 🆘 Solução de Problemas
 
-### Problema: Containers não iniciam
-
+### **Erro 406 (Not Acceptable)**
 ```bash
-# Ver logs detalhados
+# Causa: Schema não está em PGRST_DB_SCHEMAS
+# Solução:
+./scripts/update-schemas-postgrest.sh
+```
+
+### **Containers não iniciam**
+```bash
 sudo docker compose logs
-
-# Verificar se portas estão em uso
 sudo netstat -tulpn | grep -E '80|443|3000|5432'
-
-# Parar e remover tudo
 sudo docker compose down -v
 sudo docker compose up -d
 ```
 
-### Problema: Erro 502 Bad Gateway
-
+### **Erro 502 Bad Gateway**
 ```bash
-# Verificar se PostgREST está rodando
 sudo docker compose ps postgrest
-
-# Ver logs do PostgREST
 sudo docker compose logs postgrest
-
-# Reiniciar PostgREST
 sudo docker compose restart postgrest
 ```
 
-### Problema: Banco de dados não conecta
-
+### **Banco não conecta**
 ```bash
-# Verificar se PostgreSQL está rodando
 sudo docker compose ps postgres
-
-# Ver logs do PostgreSQL
 sudo docker compose logs postgres
-
-# Verificar variáveis de ambiente
-cat .env
+cat .env  # Verificar credenciais
 ```
 
-### Problema: Arquivos estáticos não carregam
-
+### **Arquivos estáticos não carregam**
 ```bash
-# Verificar se arquivos estão no lugar certo
 ls -la frontend/dist/
+./deploy.sh  # Rebuild completo
+```
 
-# Rebuild e redeploy
-./deploy.sh
+### **Upload de imagens não funciona**
+```bash
+# Verificar R2 Service
+curl http://localhost:3001/health
+
+# Verificar credenciais R2 no .env
+cat .env | grep R2_
+
+# Ver logs
+sudo docker compose logs r2-service
 ```
 
 ---
 
-## 📊 Checklist de Deploy
+## � Resumo Rápido
 
-- [ ] Servidor VPS configurado
-- [ ] Docker e Docker Compose instalados
-- [ ] Firewall configurado (portas 22, 80, 443)
-- [ ] Projeto clonado em `/var/www/NewCatalogo`
-- [ ] Arquivo `.env` criado com senhas fortes
-- [ ] Dependências instaladas (`npm install`)
-- [ ] Frontend compilado (`npm run build`)
-- [ ] Containers Docker rodando (`docker compose up -d`)
-- [ ] Aplicação acessível via navegador
-- [ ] Domínio configurado (opcional)
-- [ ] SSL/HTTPS configurado (recomendado)
-- [ ] Backup automático configurado
-- [ ] Monitoramento configurado
+### **Deploy Docker (5 minutos)**
+```bash
+# 1. Preparar
+sudo apt update && sudo apt upgrade -y
+curl -fsSL https://get.docker.com | sh
+sudo apt install docker-compose git nodejs npm -y
+
+# 2. Clonar
+cd /var/www
+sudo git clone https://github.com/SEU_USUARIO/NewCatalogo.git
+cd NewCatalogo
+
+# 3. Configurar
+cp .env.docker .env
+nano .env  # Configurar R2
+
+# 4. Deploy
+npm install && npm run build
+mkdir -p frontend/dist && cp -r dist/* frontend/dist/
+sudo docker compose up -d
+
+# 5. Criar tenant
+./scripts/create-tenant-dynamic.sh
+```
+
+### **Gerenciar Tenants**
+```bash
+# Criar novo
+./scripts/create-tenant-dynamic.sh
+
+# Listar existentes
+sudo docker exec -it newcatalogo-postgres-1 psql -U postgres -d new_catalogo -c "SELECT slug, display_name FROM master.tenants;"
+
+# Atualizar schemas do PostgREST
+./scripts/update-schemas-postgrest.sh
+```
 
 ---
-
-## 🎓 Dicas Importantes
-
-1. **Sempre faça backup** antes de atualizar
-2. **Use senhas fortes** no arquivo `.env`
-3. **Configure SSL/HTTPS** para segurança
-4. **Monitore os logs** regularmente
-5. **Mantenha o sistema atualizado** (`apt update && apt upgrade`)
-6. **Use o script `deploy.sh`** para facilitar atualizações
-7. **Documente mudanças** que você fizer
-
----
-
-## 📞 Suporte
-
-Se tiver problemas:
-
-1. Verifique os logs: `sudo docker compose logs -f`
-2. Consulte este documento
-3. Entre em contato com o suporte da New Standard
-
----
-
-**Última atualização:** Março 2026  
-**Versão:** 1.0  
-**Autor:** New Standard
