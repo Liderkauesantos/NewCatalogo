@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict vwhgiV1AbcA61c0KRe6t3E3kCIhg7o3IkcxUsH35LMddg8XuQjlDWegX8wgVZGy
+\restrict mlVszCOdemkGVDUrIFATVovStzeESxd2DP0dIsvXGFYGb2ntt4BCd9rbIleD6vz
 
 -- Dumped from database version 15.17
 -- Dumped by pg_dump version 15.17
@@ -964,8 +964,7 @@ COPY demo.brand_settings (id, company_name, logo_url, whatsapp, primary_color, s
 --
 
 COPY demo.carousel_slides (id, title, subtitle, cta_text, image_url, bg_gradient, display_order, is_active, created_at, updated_at) FROM stdin;
-7c458ad9-6fa3-498a-9741-07a88e918249	Bem-vindo à Loja Demo	Confira nossos produtos	Ver Catálogo	\N	from-blue-600 via-blue-500 to-cyan-400	1	t	2026-03-16 18:31:33.22371+00	2026-03-16 18:31:33.22371+00
-15f5a218-cf1b-4164-9d5e-113a08c2d2c9	Guerra do Vietnã	Devs no Vietnã	Boom	https://pub-86116ea264a24fd193d4c779daa34706.r2.dev/newcatalogo/demo/banners/1773833503935-115366.jpg	from-red-600 via-red-500 to-orange-400	99	t	2026-03-18 11:31:47.164182+00	2026-03-18 11:31:47.164182+00
+7c458ad9-6fa3-498a-9741-07a88e918249	Bem-vindo ao Catalogo de Demonstração	New Standard	Ver Catálogo	https://pub-86116ea264a24fd193d4c779daa34706.r2.dev/newcatalogo/demo/banners/1773846227778-newstandard.jpg	from-blue-600 via-blue-500 to-cyan-400	1	t	2026-03-16 18:31:33.22371+00	2026-03-18 15:04:16.379573+00
 \.
 
 
@@ -1013,8 +1012,7 @@ COPY demo.product_images (id, product_id, image_url, display_order, created_at) 
 --
 
 COPY demo.products (id, name, code, description, price, stock_quantity, category_id, image_url, is_active, created_at, updated_at) FROM stdin;
-5ce027fc-fedd-4d9f-9efe-8ebb9d373a9a	abc	123	aaa	50	10	44520c69-5268-4720-a821-e4e63f937f2b	https://pub-86116ea264a24fd193d4c779daa34706.r2.dev/newcatalogo/demo/product-images/1773771434036-Gemini_Generated_Image_nyp2pvnyp2pvnyp2.png	t	2026-03-17 18:17:18.963811+00	2026-03-17 18:17:18.963811+00
-46df166c-b8d0-4263-a582-07e5736376d2	Produto teste 2	228465	teste	50	5	fe5f9916-817f-496a-b03f-873b2ea13524	https://pub-86116ea264a24fd193d4c779daa34706.r2.dev/newcatalogo/demo/product-images/1773773657315-outros_Raphael.jpg	t	2026-03-17 18:54:20.00649+00	2026-03-17 18:54:20.00649+00
+42ae834f-0651-4ccc-8f9c-239147cfc505	Produto teste	15973	Produto inicial de teste	150.45	25	44520c69-5268-4720-a821-e4e63f937f2b	https://pub-86116ea264a24fd193d4c779daa34706.r2.dev/newcatalogo/demo/product-images/1773846179071-produto_teste_auaha_3_1_a54bab0298356a66aa94c7d7b027314b.jpg	t	2026-03-18 15:03:01.811041+00	2026-03-18 15:03:01.811041+00
 \.
 
 
@@ -1483,5 +1481,5 @@ ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA demo GRANT SELECT ON TABLES
 -- PostgreSQL database dump complete
 --
 
-\unrestrict vwhgiV1AbcA61c0KRe6t3E3kCIhg7o3IkcxUsH35LMddg8XuQjlDWegX8wgVZGy
+\unrestrict mlVszCOdemkGVDUrIFATVovStzeESxd2DP0dIsvXGFYGb2ntt4BCd9rbIleD6vz
 
