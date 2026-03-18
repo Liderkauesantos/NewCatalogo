@@ -42,6 +42,9 @@ const App = () => (
                   {/* Catálogo público */}
                   <Route index element={<Index />} />
 
+                  {/* PWA Install */}
+                  <Route path="install" element={<Install />} />
+
                   {/* Login e setup admin */}
                   <Route path="admin/login" element={<Login />} />
                   <Route path="admin/setup" element={<AdminSetup />} />

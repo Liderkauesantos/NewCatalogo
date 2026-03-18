@@ -34,7 +34,7 @@ services:
     environment:
       PGRST_DB_URI: postgres://authenticator:${AUTHENTICATOR_PASSWORD}@postgres:5432/new_catalogo
       # SCHEMAS DINÂMICOS: Lista todos os schemas para validação do Accept-Profile
-      PGRST_DB_SCHEMAS: casarossi,demo,lojaflavio,lojakaue,lojanew,lojateste,master,public
+      PGRST_DB_SCHEMAS: demo,master,public
       PGRST_DB_ANON_ROLE: anon
       PGRST_DB_PRE_REQUEST: set_tenant
       PGRST_JWT_SECRET: ${JWT_SECRET}

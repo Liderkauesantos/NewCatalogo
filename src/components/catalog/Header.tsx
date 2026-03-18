@@ -41,7 +41,7 @@ export function Header({ onCartClick }: HeaderProps) {
 
         {/* Nav e carrinho */}
         <div className="flex items-center gap-3">
-          {!isInstalled && (
+          {/* {!isInstalled && (
             <Link
               to={`/${slug}/install`}
               className="flex items-center gap-1.5 px-3 py-2 text-muted-foreground hover:text-foreground rounded-xl text-sm font-medium hover:bg-muted transition-all"
@@ -49,7 +49,7 @@ export function Header({ onCartClick }: HeaderProps) {
               <Download className="h-4 w-4" />
               <span className="hidden sm:inline">Instalar</span>
             </Link>
-          )}
+          )} */}
           <Link
             to={`/${slug}/admin/login`}
             className="flex items-center gap-1.5 px-3 py-2 text-muted-foreground hover:text-foreground rounded-xl text-sm font-medium hover:bg-muted transition-all"
