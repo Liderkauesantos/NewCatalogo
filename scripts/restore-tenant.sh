@@ -23,7 +23,7 @@ NC='\033[0m'
 BACKUP_DIR="$PROJECT_DIR/backups"
 
 echo -e "${BLUE}╔════════════════════════════════════════════════╗${NC}"
-echo -e "${BLUE}║   📥 Restaurar Backup de Tenant               ║${NC}"
+echo -e "${BLUE}║    📥 Restaurar Backup de Tenant               ║${NC}"
 echo -e "${BLUE}╚════════════════════════════════════════════════╝${NC}"
 echo ""
 

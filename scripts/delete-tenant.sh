@@ -17,7 +17,7 @@ BLUE='\033[0;34m'
 NC='\033[0m'
 
 echo -e "${RED}╔════════════════════════════════════════════════╗${NC}"
-echo -e "${RED}║   ⚠️  DELETAR TENANT (IRREVERSÍVEL)           ║${NC}"
+echo -e "${RED}║    ⚠️  DELETAR TENANT (IRREVERSÍVEL)           ║${NC}"
 echo -e "${RED}╚════════════════════════════════════════════════╝${NC}"
 echo ""
 

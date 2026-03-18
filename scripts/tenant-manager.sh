@@ -23,8 +23,8 @@ clear
 
 while true; do
     echo -e "${CYAN}╔════════════════════════════════════════════════╗${NC}"
-    echo -e "${CYAN}║         🏢 Gerenciador de Tenants             ║${NC}"
-    echo -e "${CYAN}║         NewCatálogo - Multi-Tenant            ║${NC}"
+    echo -e "${CYAN}║         🏢 Gerenciador de Tenants              ║${NC}"
+    echo -e "${CYAN}║         NewCatálogo - Multi-Tenant             ║${NC}"
     echo -e "${CYAN}╚════════════════════════════════════════════════╝${NC}"
     echo ""
     echo -e "${GREEN}📋 Operações Disponíveis:${NC}"
