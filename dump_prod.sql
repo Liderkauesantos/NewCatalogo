@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict mlVszCOdemkGVDUrIFATVovStzeESxd2DP0dIsvXGFYGb2ntt4BCd9rbIleD6vz
+\restrict 8DwdjdbCZ4od3JBYQRZRTZ4x0Z7u9fPcGWMDmbaPag1yl0V9ZvylbHswMLFrsw8
 
 -- Dumped from database version 15.17
 -- Dumped by pg_dump version 15.17
@@ -955,7 +955,7 @@ ALTER TABLE master.tenants OWNER TO postgres;
 --
 
 COPY demo.brand_settings (id, company_name, logo_url, whatsapp, primary_color, secondary_color, created_at, updated_at) FROM stdin;
-2af933c5-a185-469a-89b5-3bbc9e924ccb	Loja Demo	\N	5511999999999	#2563eb	#ffffff	2026-03-16 18:31:33.208632+00	2026-03-16 18:31:33.208632+00
+2af933c5-a185-469a-89b5-3bbc9e924ccb	New Standard	https://pub-86116ea264a24fd193d4c779daa34706.r2.dev/newcatalogo/demo/brand-assets/1773846349673-10a414d7-4a7a-44d9-a576-1e9921b48a90.jpg	5511999999999	#2563eb	#ffffff	2026-03-16 18:31:33.208632+00	2026-03-18 15:06:53.309489+00
 \.
 
 
@@ -1481,5 +1481,5 @@ ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA demo GRANT SELECT ON TABLES
 -- PostgreSQL database dump complete
 --
 
-\unrestrict mlVszCOdemkGVDUrIFATVovStzeESxd2DP0dIsvXGFYGb2ntt4BCd9rbIleD6vz
+\unrestrict 8DwdjdbCZ4od3JBYQRZRTZ4x0Z7u9fPcGWMDmbaPag1yl0V9ZvylbHswMLFrsw8
 
